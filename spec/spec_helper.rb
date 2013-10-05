@@ -1,9 +1,7 @@
 require 'rubygems'
 require 'bundler/setup'
-
 require 'mongoid'
 require 'mongoid/audit_log'
-
 require 'rspec'
 
 Mongoid.configure do |config|
