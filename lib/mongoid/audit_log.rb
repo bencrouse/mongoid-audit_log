@@ -1,5 +1,6 @@
 require "mongoid/audit_log/version"
 require "mongoid/audit_log/entry"
+require "mongoid/audit_log/changes"
 
 module Mongoid
   module AuditLog
@@ -10,8 +11,13 @@ module Mongoid
                                    :class_name => 'Mongoid::AuditLog::Entry'
 
       [:create, :update, :destroy].each do |action|
-        send("before_#{action}") { prepare_audit_log_entry(action) if Mongoid::AuditLog.recording? }
-        send("after_#{action}") { save_audit_log_entry(action) if Mongoid::AuditLog.recording? }
+        send("before_#{action}") do
+          prepare_audit_log_entry(action) if Mongoid::AuditLog.recording?
+        end
+
+        send("after_#{action}") do
+          save_audit_log_entry(action) if Mongoid::AuditLog.recording?
+        end
       end
     end
 
@@ -34,10 +40,10 @@ module Mongoid
       Thread.current[:mongoid_audit_log_modifier]
     end
 
-  private
+    private
 
     def prepare_audit_log_entry(type)
-      @_audit_log_changes = changes.except('_id')
+      @_audit_log_changes = Mongoid::AuditLog::Changes.new(self).tap(&:read)
     end
 
     def save_audit_log_entry(type)
@@ -48,11 +54,11 @@ module Mongoid
           :is_destroy => true,
           :modifier => Mongoid::AuditLog.current_modifier
         )
-      else
+      elsif type == :create || @_audit_log_changes.present?
         audit_log_entries.create!(
           :is_create => type == :create,
           :is_update => type == :update,
-          :tracked_changes => @_audit_log_changes,
+          :tracked_changes => @_audit_log_changes.all,
           :modifier => Mongoid::AuditLog.current_modifier
         )
       end

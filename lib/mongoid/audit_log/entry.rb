@@ -10,8 +10,9 @@ module Mongoid
       field :tracked_changes, :type => Hash, :default => {}
       field :modifier_id, :type => String
 
-      belongs_to :audited, :polymorphic => true, :index => true
+      belongs_to :audited, :polymorphic => true
 
+      index({ :audited_id => 1, :audited_type => 1 })
       index({ :modifier_id => 1 })
 
       def modifier

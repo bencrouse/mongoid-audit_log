@@ -15,6 +15,7 @@ module Mongoid
 
       after(:all) do
         AuditLog.modifier_class_name = @remember_modifier_class_name
+        Object.send(:remove_const, :Product)
       end
 
       let(:user) { User.create! }

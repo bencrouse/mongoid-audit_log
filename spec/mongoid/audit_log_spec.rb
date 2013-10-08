@@ -6,13 +6,20 @@ module Mongoid
       class ::Product
         include Mongoid::Document
         include Mongoid::AuditLog
-
         field :name, :type => String
+        embeds_many :variants
+      end
+
+      class ::Variant
+        include Mongoid::Document
+        field :sku, :type => String
+        embedded_in :product
       end
     end
 
     after(:all) do
       Object.send(:remove_const, :Product)
+      Object.send(:remove_const, :Variant)
     end
 
     describe '.record' do
@@ -62,29 +69,67 @@ module Mongoid
         end
       end
 
-      it 'saves details on an entry on create' do
-        product = Product.create!(:name => 'Foo bar')
-        entry = product.audit_log_entries.first
+      context 'create' do
+        it 'saves details' do
+          product = Product.create!(:name => 'Foo bar')
+          entry = product.audit_log_entries.first
 
-        entry.is_create?.should be_true
-        entry.tracked_changes.should == { 'name' => [nil, 'Foo bar'] }
+          entry.is_create?.should be_true
+          entry.tracked_changes.should == { 'name' => [nil, 'Foo bar'] }
+        end
+
+        it 'saves embedded creations' do
+          product = Product.new(:name => 'Foo bar')
+          product.variants.build(sku: 'sku')
+          product.save!
+
+          entry = product.audit_log_entries.first
+
+          entry.is_create?.should be_true
+          entry.tracked_changes.should == {
+            'name' => [nil, 'Foo bar'],
+            'variants' => [{ 'sku' => [nil, 'sku'] }]
+          }
+        end
       end
 
-      it 'saves details on an update' do
-        product = Product.create!(:name => 'Foo bar')
-        product.update_attributes(:name => 'Bar baz')
-        entry = product.audit_log_entries.last
+      context 'update' do
+        it 'saves details' do
+          product = Product.create!(:name => 'Foo bar')
+          product.update_attributes(:name => 'Bar baz')
+          entry = product.audit_log_entries.last
 
-        entry.is_update?.should be_true
-        entry.tracked_changes.should == { 'name' => ['Foo bar', 'Bar baz'] }
+          entry.is_update?.should be_true
+          entry.tracked_changes.should == { 'name' => ['Foo bar', 'Bar baz'] }
+        end
+
+        it 'saves embedded updates' do
+          product = Product.new(:name => 'Foo bar')
+          product.variants.build(sku: 'sku')
+          product.save!
+
+          product.name = 'Bar baz'
+          product.variants.first.sku = 'newsku'
+          product.save!
+
+          entry = product.audit_log_entries.last
+
+          entry.is_update?.should be_true
+          entry.tracked_changes.should == {
+            'name' => ['Foo bar', 'Bar baz'],
+            'variants' => [{ 'sku' => ['sku', 'newsku'] }]
+          }
+        end
       end
 
-      it 'saves details on a destroy' do
-        product = Product.create!(:name => 'Foo bar')
-        product.destroy
-        entry = product.audit_log_entries.last
+      context 'destroy' do
+        it 'saves an entry' do
+          product = Product.create!(:name => 'Foo bar')
+          product.destroy
+          entry = product.audit_log_entries.last
 
-        entry.is_destroy?.should be_true
+          entry.is_destroy?.should be_true
+        end
       end
     end
   end
