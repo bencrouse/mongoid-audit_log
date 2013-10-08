@@ -27,11 +27,10 @@ module Mongoid
       describe '.extract_from' do
         context 'enumerable' do
           it 'returns mapped changes' do
-            models = Array.new(3) { Product.create! }
+            models = Array.new(3) { Product.new(name: rand) }
             results = Changes.extract_from(models)
 
             results.length.should == 3
-            results.all? { |r| r == {} }.should be_true
           end
         end
       end
@@ -72,6 +71,15 @@ module Mongoid
           product.updated_at = 1.hour.from_now
 
           changes.should_not be_present
+        end
+
+        it 'has changes if only the embedded model changes' do
+          product.save!
+          product.variants.first.sku = 'newsku'
+
+          changes.should == {
+            "variants"=> [{ "sku" =>[ "sku1", "newsku"] }]
+          }
         end
       end
 

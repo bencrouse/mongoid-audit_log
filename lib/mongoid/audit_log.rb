@@ -1,6 +1,7 @@
 require "mongoid/audit_log/version"
 require "mongoid/audit_log/entry"
 require "mongoid/audit_log/changes"
+require "mongoid/audit_log/embedded_changes"
 
 module Mongoid
   module AuditLog

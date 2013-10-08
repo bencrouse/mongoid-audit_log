@@ -12,9 +12,11 @@ module Mongoid
         if value.is_a?(Hash)
           raise ArgumentError, 'does not support hashes'
         elsif value.is_a?(Enumerable)
-          value.map do |model|
+          changes = value.map do |model|
             Mongoid::AuditLog::Changes.new(model).all
           end
+
+          changes.reject(&:blank?)
         else
           Mongoid::AuditLog::Changes.new(value).all
         end
@@ -59,25 +61,7 @@ module Mongoid
       private
 
       def embedded_changes
-        embedded_relations.inject({}) do |memo, t|
-          name = t.first
-          embedded = model.send(name)
-          changes = Mongoid::AuditLog::Changes.extract_from(embedded)
-
-          memo[name] = changes if embedded.present? &&
-                                  changes.present? &&
-                                  (!changes.respond_to?(:all?) || changes.all?(&:present?))
-
-          memo
-        end
-      end
-
-      def embedded_relations
-        model.relations.inject({}) do |memo, t|
-          name, relation = *t
-          memo[name] = relation if relation.macro.in?(:embeds_one, :embeds_many)
-          memo
-        end
+        @embedded_changes ||= Mongoid::AuditLog::EmbeddedChanges.new(model).all
       end
     end
   end
