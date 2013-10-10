@@ -1,6 +1,6 @@
 # Mongoid::AuditLog
 
-TODO: Write a gem description
+Frustrated with the other options for this, I wrote this gem to handle most basic audit logging for Mongoid. It is intended to be stupidly simple, and offers no fancy functionality.
 
 ## Installation
 
@@ -18,7 +18,77 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+### Recording Activity
+
+Include the `Mongoid::AuditLog` module into your model.
+
+```ruby
+class Model
+  include Mongoid::Document
+  include Mongoid::AuditLog
+end
+```
+
+This will not enable logging by itself, only changes made within the block passed to the record method will be saved.
+
+```ruby
+Mongoid::AuditLog.record do
+  Model.create!
+end
+```
+
+If you want to log the user who made the change, pass them to the record method:
+
+```ruby
+Mongoid::AuditLog.record(current_user) do
+  Model.create!
+end
+```
+
+A basic implementation in a Rails app might look something like:
+
+```ruby
+class ApplicationController < ActionController::Base
+  around_filter :audit_log
+
+  def current_user
+    @current_user ||= User.find(session[:user_id)
+  end
+
+  private
+
+  def audit_log
+    Mongoid::AuditLog.record(current_user) do
+      yield
+    end
+  end
+end
+```
+
+### Viewing Activity
+
+When an audited model is changed, it will create a record of the `Mongoid::AuditLog::Entry` class.
+Each class responds to some query methods:
+
+```ruby
+entry = Mongoid::AuditLog::Entry.create!(:action => :create)
+entry.create? # => true
+entry.update? # => false
+entry.destroy? # => false
+```
+
+There are also some built-in scopes (from the tests):
+
+```ruby
+  create = Entry.create!(:action => :create, :created_at => 10.minutes.ago) }
+  update = Entry.create!(:action => :update, :created_at => 5.minutes.ago) }
+  destroy = Entry.create!(:action => :destroy, :created_at => 1.minutes.ago) }
+
+  Entry.creates.to_a.should == [create]
+  Entry.updates.to_a.should == [update]
+  Entry.destroys.to_a.should == [destroy]
+  Entry.newest.to_a.should == [destroy, update, create]
+end
 
 ## Contributing
 
