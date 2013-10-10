@@ -74,7 +74,7 @@ module Mongoid
           product = Product.create!(:name => 'Foo bar')
           entry = product.audit_log_entries.first
 
-          entry.is_create?.should be_true
+          entry.create?.should be_true
           entry.tracked_changes.should == { 'name' => [nil, 'Foo bar'] }
         end
 
@@ -85,7 +85,7 @@ module Mongoid
 
           entry = product.audit_log_entries.first
 
-          entry.is_create?.should be_true
+          entry.create?.should be_true
           entry.tracked_changes.should == {
             'name' => [nil, 'Foo bar'],
             'variants' => [{ 'sku' => [nil, 'sku'] }]
@@ -99,7 +99,7 @@ module Mongoid
           product.update_attributes(:name => 'Bar baz')
           entry = product.audit_log_entries.last
 
-          entry.is_update?.should be_true
+          entry.update?.should be_true
           entry.tracked_changes.should == { 'name' => ['Foo bar', 'Bar baz'] }
         end
 
@@ -114,7 +114,7 @@ module Mongoid
 
           entry = product.audit_log_entries.last
 
-          entry.is_update?.should be_true
+          entry.update?.should be_true
           entry.tracked_changes.should == {
             'name' => ['Foo bar', 'Bar baz'],
             'variants' => [{ 'sku' => ['sku', 'newsku'] }]
@@ -128,7 +128,7 @@ module Mongoid
           product.destroy
           entry = product.audit_log_entries.last
 
-          entry.is_destroy?.should be_true
+          entry.destroy?.should be_true
         end
       end
     end

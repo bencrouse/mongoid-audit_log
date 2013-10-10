@@ -1,4 +1,5 @@
 require "mongoid/audit_log/version"
+require "mongoid/audit_log/actions"
 require "mongoid/audit_log/entry"
 require "mongoid/audit_log/changes"
 require "mongoid/audit_log/embedded_changes"
@@ -7,13 +8,16 @@ module Mongoid
   module AuditLog
     extend ActiveSupport::Concern
 
+    mattr_accessor :modifier_class_name
+    self.modifier_class_name = 'User'
+
     included do
       has_many :audit_log_entries, :as => :audited,
-                                   :class_name => 'Mongoid::AuditLog::Entry'
+        :class_name => 'Mongoid::AuditLog::Entry'
 
-      [:create, :update, :destroy].each do |action|
+      Mongoid::AuditLog.actions.each do |action|
         send("before_#{action}") do
-          prepare_audit_log_entry(action) if Mongoid::AuditLog.recording?
+          set_audit_log_changes if Mongoid::AuditLog.recording?
         end
 
         send("after_#{action}") do
@@ -21,9 +25,6 @@ module Mongoid
         end
       end
     end
-
-    mattr_accessor :modifier_class_name
-    self.modifier_class_name = 'User'
 
     def self.record(modifier = nil)
       Thread.current[:mongoid_audit_log_recording] = true
@@ -43,26 +44,17 @@ module Mongoid
 
     private
 
-    def prepare_audit_log_entry(type)
+    def set_audit_log_changes
       @_audit_log_changes = Mongoid::AuditLog::Changes.new(self).tap(&:read)
     end
 
-    def save_audit_log_entry(type)
-      if type == :destroy
-        Mongoid::AuditLog::Entry.create!(
-          :audited_type => self.class,
-          :audited_id => id,
-          :is_destroy => true,
-          :modifier => Mongoid::AuditLog.current_modifier
-        )
-      elsif type == :create || @_audit_log_changes.present?
-        audit_log_entries.create!(
-          :is_create => type == :create,
-          :is_update => type == :update,
-          :tracked_changes => @_audit_log_changes.all,
-          :modifier => Mongoid::AuditLog.current_modifier
-        )
-      end
+    def save_audit_log_entry(action)
+      Mongoid::AuditLog::Entry.create!(
+        :action => action,
+        :audited_type => self.class,
+        :audited_id => id,
+        :tracked_changes => @_audit_log_changes.all
+      )
     end
   end
 end

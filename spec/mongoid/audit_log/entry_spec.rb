@@ -20,6 +20,36 @@ module Mongoid
 
       let(:user) { User.create! }
 
+      describe 'scopes' do
+        let!(:create) { Entry.create!(:action => :create, :created_at => 10.minutes.ago) }
+        let!(:update) { Entry.create!(:action => :update, :created_at => 5.minutes.ago) }
+        let!(:destroy) { Entry.create!(:action => :destroy, :created_at => 1.minutes.ago) }
+
+        describe '.creates' do
+          it 'returns actions which are creates' do
+            Entry.creates.to_a.should == [create]
+          end
+        end
+
+        describe '.updates' do
+          it 'returns actions which are updates' do
+            Entry.updates.to_a.should == [update]
+          end
+        end
+
+        describe '.destroys' do
+          it 'returns actions which are destroys' do
+            Entry.destroys.to_a.should == [destroy]
+          end
+        end
+
+        describe '.newest' do
+          it 'sorts with newest first' do
+            Entry.newest.to_a.should == [destroy, update, create]
+          end
+        end
+      end
+
       describe '#modifier' do
         it 'finds the modifier based on the configured class' do
           entry = Entry.new(:modifier_id => user.id)

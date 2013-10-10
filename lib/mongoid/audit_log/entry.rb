@@ -4,9 +4,7 @@ module Mongoid
       include Mongoid::Document
       include Mongoid::Timestamps::Created
 
-      field :is_create, :type => Boolean, :default => false
-      field :is_update, :type => Boolean, :default => false
-      field :is_destroy, :type => Boolean, :default => false
+      field :action, :type => Symbol
       field :tracked_changes, :type => Hash, :default => {}
       field :modifier_id, :type => String
 
@@ -14,6 +12,23 @@ module Mongoid
 
       index({ :audited_id => 1, :audited_type => 1 })
       index({ :modifier_id => 1 })
+
+      scope :creates, where(:action => :create)
+      scope :updates, where(:action => :update)
+      scope :destroys, where(:action => :destroy)
+      scope :newest, order_by(:created_at.desc)
+
+      Mongoid::AuditLog.actions.each do |action_name|
+        define_method "#{action_name}?" do
+          action == action_name
+        end
+      end
+
+      def valid?(*)
+        result = super
+        self.modifier = Mongoid::AuditLog.current_modifier if result
+        result
+      end
 
       def modifier
         @modifier ||= if modifier_id.blank?
