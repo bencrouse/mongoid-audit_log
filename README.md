@@ -84,7 +84,7 @@ model.audit_log_entries.first.update? # => false
 model.audit_log_entries.first.destroy? # => false
 
 model.audit_log_entries.second.create? # => false
-model.audit_log_entries.second.update? # => update
+model.audit_log_entries.second.update? # => true
 model.audit_log_entries.second.destroy? # => false
 
 # And on update you have the tracked changes
