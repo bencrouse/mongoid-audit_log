@@ -26,6 +26,7 @@ Include the `Mongoid::AuditLog` module into your model.
 class Model
   include Mongoid::Document
   include Mongoid::AuditLog
+  field :name
 end
 ```
 
@@ -37,7 +38,7 @@ Mongoid::AuditLog.record do
 end
 ```
 
-If you want to log the user who made the change, pass them to the record method:
+If you want to log the user who made the change, pass that user to the record method:
 
 ```ruby
 Mongoid::AuditLog.record(current_user) do
@@ -52,7 +53,7 @@ class ApplicationController < ActionController::Base
   around_filter :audit_log
 
   def current_user
-    @current_user ||= User.find(session[:user_id)
+    @current_user ||= User.find(session[:user_id])
   end
 
   private
@@ -71,10 +72,23 @@ When an audited model is changed, it will create a record of the `Mongoid::Audit
 Each class responds to some query methods:
 
 ```ruby
-entry = Mongoid::AuditLog::Entry.create!(:action => :create)
-entry.create? # => true
-entry.update? # => false
-entry.destroy? # => false
+Mongoid::AuditLog.record do
+  model = Model.create!
+  module.update_attributes(:name => 'model')
+end
+
+model.audit_log_entries.length == 2
+
+model.audit_log_entries.first.create? # => true
+model.audit_log_entries.first.update? # => false
+model.audit_log_entries.first.destroy? # => false
+
+model.audit_log_entries.second.create? # => false
+model.audit_log_entries.second.update? # => update
+model.audit_log_entries.second.destroy? # => false
+
+# And on update you have the tracked changes
+model.audit_log_entries.second.tracked_changes.should == { 'name' => [nil, 'model'] }
 ```
 
 There are also some built-in scopes (from the tests):
@@ -89,6 +103,7 @@ There are also some built-in scopes (from the tests):
   Entry.destroys.to_a.should == [destroy]
   Entry.newest.to_a.should == [destroy, update, create]
 end
+```
 
 ## Contributing
 
