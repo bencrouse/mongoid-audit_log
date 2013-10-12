@@ -49,12 +49,14 @@ module Mongoid
     end
 
     def save_audit_log_entry(action)
-      Mongoid::AuditLog::Entry.create!(
-        :action => action,
-        :audited_type => self.class,
-        :audited_id => id,
-        :tracked_changes => @_audit_log_changes.all
-      )
+      unless action == :update && @_audit_log_changes.all.blank?
+        Mongoid::AuditLog::Entry.create!(
+          :action => action,
+          :audited_type => self.class,
+          :audited_id => id,
+          :tracked_changes => @_audit_log_changes.all
+        )
+      end
     end
   end
 end

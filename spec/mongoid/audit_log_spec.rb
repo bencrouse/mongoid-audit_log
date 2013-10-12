@@ -120,6 +120,12 @@ module Mongoid
             'variants' => [{ 'sku' => ['sku', 'newsku'] }]
           }
         end
+
+        it 'does not save blank updates' do
+          product = Product.create!(:name => 'Foo bar')
+          product.update_attributes(:name => 'Foo bar')
+          product.audit_log_entries.length.should == 1
+        end
       end
 
       context 'destroy' do
