@@ -11,7 +11,7 @@ module Mongoid
 
     included do
       has_many :audit_log_entries, :as => :audited,
-        :class_name => 'Mongoid::AuditLog::Entry'
+        :class_name => 'Mongoid::AuditLog::Entry', :validate => false
 
       Mongoid::AuditLog.actions.each do |action|
         send("before_#{action}") do
