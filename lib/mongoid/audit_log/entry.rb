@@ -7,6 +7,7 @@ module Mongoid
       field :action, :type => Symbol
       field :tracked_changes, :type => Hash, :default => {}
       field :modifier_id, :type => String
+      field :caches, :type => Hash
 
       belongs_to :audited, :polymorphic => true
 
@@ -47,6 +48,14 @@ module Mongoid
                            end
 
         @modifier = modifier
+      end
+
+      def method_missing(sym, *args, &block)
+        if caches.present? && caches[sym.to_s].present?
+          caches[sym.to_s]
+        else
+          super
+        end
       end
     end
   end

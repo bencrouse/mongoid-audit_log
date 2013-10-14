@@ -51,6 +51,24 @@ module Mongoid
         end
       end
 
+      it 'saves cache fields from configuration' do
+        tmp = Mongoid::AuditLog.cache_fields
+        Mongoid::AuditLog.cache_fields << :name
+
+        AuditLog.record do
+          product = Product.create!(:name => 'Foo bar')
+          product.update_attributes(:name => 'Bar baz')
+          product.destroy
+
+          product.audit_log_entries.count.should == 3
+          product.audit_log_entries.each do |entry|
+            entry.name.should be_present
+          end
+        end
+
+        Mongoid::AuditLog.cache_fields = tmp
+      end
+
       it 'saves the modifier if passed' do
         user = User.create!
         AuditLog.record(user) do

@@ -1,15 +1,13 @@
 require "mongoid/audit_log/version"
-require "mongoid/audit_log/actions"
+require "mongoid/audit_log/config"
 require "mongoid/audit_log/entry"
+require "mongoid/audit_log/caches"
 require "mongoid/audit_log/changes"
 require "mongoid/audit_log/embedded_changes"
 
 module Mongoid
   module AuditLog
     extend ActiveSupport::Concern
-
-    mattr_accessor :modifier_class_name
-    self.modifier_class_name = 'User'
 
     included do
       has_many :audit_log_entries, :as => :audited,
@@ -54,7 +52,8 @@ module Mongoid
           :action => action,
           :audited_type => self.class,
           :audited_id => id,
-          :tracked_changes => @_audit_log_changes.all
+          :tracked_changes => @_audit_log_changes.all,
+          :caches => Mongoid::AuditLog::Caches.new(self).all
         )
       end
     end
