@@ -70,6 +70,15 @@ module Mongoid
           entry.modifier_id.should == 'test'
         end
       end
+
+      describe '#method_missing' do
+        let(:entry) { Entry.new(:caches => { 'name' => 'foo', 'other' => nil }) }
+
+        it 'responds to methods for which it has a cache' do
+          entry.name.should == 'foo'
+          entry.other.should == nil
+        end
+      end
     end
   end
 end

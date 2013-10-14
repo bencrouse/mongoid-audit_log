@@ -51,8 +51,10 @@ module Mongoid
       end
 
       def method_missing(sym, *args, &block)
-        if caches.present? && caches[sym.to_s].present?
-          caches[sym.to_s]
+        key = sym.to_s
+
+        if caches.present? && caches.has_key?(key)
+          caches[key]
         else
           super
         end
