@@ -78,6 +78,21 @@ module Mongoid
       end
     end
 
+    describe '.disable' do
+      it 'can disable recording' do
+        AuditLog.record do
+          product = Product.create!(:name => 'Foo bar')
+
+          AuditLog.disable do
+            product.update_attributes(:name => 'Bar baz')
+          end
+
+          product.name.should == 'Bar baz'
+          product.audit_log_entries.count.should == 1
+        end
+      end
+    end
+
     describe 'callbacks' do
       let(:user) { User.create! }
 

@@ -32,6 +32,13 @@ module Mongoid
       Thread.current[:mongoid_audit_log_modifier] = nil
     end
 
+    def self.disable
+      tmp = Thread.current[:mongoid_audit_log_recording]
+      Thread.current[:mongoid_audit_log_recording] = false
+      yield
+      Thread.current[:mongoid_audit_log_recording] = tmp
+    end
+
     def self.recording?
       !!Thread.current[:mongoid_audit_log_recording]
     end
