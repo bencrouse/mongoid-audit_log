@@ -48,7 +48,7 @@ module Mongoid
       end
 
       def all
-        @all ||= if !model.changed?
+        @all ||= if model.blank? || !model.changed?
                    {}
                  else
                    result = model.changes

@@ -55,6 +55,10 @@ module Mongoid
           Changes.new(product).all
         end
 
+        it 'is empty if the model is nil' do
+          Changes.new(nil).all.should == {}
+        end
+
         it 'has model changes' do
           changes['name'].should == [nil, 'Foo bar']
         end
