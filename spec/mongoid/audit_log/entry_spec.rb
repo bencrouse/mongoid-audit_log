@@ -71,6 +71,15 @@ module Mongoid
         end
       end
 
+      describe '#respond_to?' do
+        let(:entry) { Entry.new(:caches => { 'name' => 'foo', 'other' => nil }) }
+
+        it 'returns true for cached methods it responds to' do
+          entry.respond_to?(:name).should be_true
+          entry.respond_to?(:other).should be_true
+        end
+      end
+
       describe '#method_missing' do
         let(:entry) { Entry.new(:caches => { 'name' => 'foo', 'other' => nil }) }
 
