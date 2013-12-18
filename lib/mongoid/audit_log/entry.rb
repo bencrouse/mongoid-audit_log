@@ -50,6 +50,11 @@ module Mongoid
         @modifier = modifier
       end
 
+      def respond_to?(sym, *args)
+        key = sym.to_s
+        (caches.present? && caches.has_key?(key)) || super
+      end
+
       def method_missing(sym, *args, &block)
         key = sym.to_s
 
