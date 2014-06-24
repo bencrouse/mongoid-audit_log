@@ -14,10 +14,10 @@ module Mongoid
       index({ :audited_id => 1, :audited_type => 1 })
       index({ :modifier_id => 1 })
 
-      scope :creates, where(:action => :create)
-      scope :updates, where(:action => :update)
-      scope :destroys, where(:action => :destroy)
-      scope :newest, order_by(:created_at.desc)
+      scope :creates, -> { where(:action => :create) }
+      scope :updates, -> { where(:action => :update) }
+      scope :destroys, -> { where(:action => :destroy) }
+      scope :newest, -> { order_by(:created_at.desc) }
 
       Mongoid::AuditLog.actions.each do |action_name|
         define_method "#{action_name}?" do

@@ -10,7 +10,7 @@ module Mongoid
       def relations
         model.relations.inject({}) do |memo, t|
           name, relation = *t
-          memo[name] = relation if relation.macro.in?(:embeds_one, :embeds_many)
+          memo[name] = relation if relation.embedded?
           memo
         end
       end
