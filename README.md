@@ -77,7 +77,7 @@ Mongoid::AuditLog.record do
   module.update_attributes(:name => 'model')
 end
 
-model.audit_log_entries.length == 2
+model.audit_log_entries.length == 2 # => true
 
 model.audit_log_entries.first.create? # => true
 model.audit_log_entries.first.update? # => false
@@ -91,12 +91,12 @@ model.audit_log_entries.second.destroy? # => false
 model.audit_log_entries.second.tracked_changes.should == { 'name' => [nil, 'model'] }
 ```
 
-There are also some built-in scopes (from the tests):
+There are also some built-in scopes (examples from the tests):
 
 ```ruby
-  create = Entry.create!(:action => :create, :created_at => 10.minutes.ago) }
-  update = Entry.create!(:action => :update, :created_at => 5.minutes.ago) }
-  destroy = Entry.create!(:action => :destroy, :created_at => 1.minutes.ago) }
+  create = Entry.create!(:action => :create, :created_at => 10.minutes.ago)
+  update = Entry.create!(:action => :update, :created_at => 5.minutes.ago)
+  destroy = Entry.create!(:action => :destroy, :created_at => 1.minutes.ago)
 
   Entry.creates.to_a.should == [create]
   Entry.updates.to_a.should == [update]
@@ -104,6 +104,25 @@ There are also some built-in scopes (from the tests):
   Entry.newest.to_a.should == [destroy, update, create]
 end
 ```
+
+### Additional saved data
+
+You can access the attributes of the model saved on the `Mongoid::AuditLog::Entry`.
+They are saved on the document in the `#model_attributes`, and include any changes in
+the `#tracked_changes` hash.
+
+Examples:
+```ruby
+Mongoid::AuditLog.record do
+  model = Model.create!(:name => 'foo bar')
+end
+
+model.audit_log_entries.length == 1 # => true
+
+model.audit_log_entries.first.create? # => true
+model.audit_log_entries.first.model_attributes # => {"name"=>"foo bar"}
+```
+
 
 ## Contributing
 
