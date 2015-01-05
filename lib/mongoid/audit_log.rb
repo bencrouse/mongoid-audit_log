@@ -1,7 +1,6 @@
 require "mongoid/audit_log/version"
 require "mongoid/audit_log/config"
 require "mongoid/audit_log/entry"
-require "mongoid/audit_log/caches"
 require "mongoid/audit_log/changes"
 require "mongoid/audit_log/embedded_changes"
 
@@ -13,13 +12,13 @@ module Mongoid
       has_many :audit_log_entries, :as => :audited,
         :class_name => 'Mongoid::AuditLog::Entry', :validate => false
 
-      Mongoid::AuditLog.actions.each do |action|
+      AuditLog.actions.each do |action|
         send("before_#{action}") do
-          set_audit_log_changes if Mongoid::AuditLog.recording?
+          set_audit_log_changes if AuditLog.recording?
         end
 
         send("after_#{action}") do
-          save_audit_log_entry(action) if Mongoid::AuditLog.recording?
+          save_audit_log_entry(action) if AuditLog.recording?
         end
       end
     end
@@ -50,17 +49,17 @@ module Mongoid
     private
 
     def set_audit_log_changes
-      @_audit_log_changes = Mongoid::AuditLog::Changes.new(self).tap(&:read)
+      @_audit_log_changes = Changes.new(self).tap(&:read)
     end
 
     def save_audit_log_entry(action)
       unless action == :update && @_audit_log_changes.all.blank?
-        Mongoid::AuditLog::Entry.create!(
+        Entry.create!(
           :action => action,
           :audited_type => self.class,
           :audited_id => id,
           :tracked_changes => @_audit_log_changes.all,
-          :caches => Mongoid::AuditLog::Caches.new(self).all
+          :model_attributes => attributes.dup
         )
       end
     end

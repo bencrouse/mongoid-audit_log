@@ -5,8 +5,5 @@ module Mongoid
 
     mattr_accessor :modifier_class_name
     self.modifier_class_name = 'User'
-
-    mattr_accessor :cache_fields
-    self.cache_fields = []
   end
 end

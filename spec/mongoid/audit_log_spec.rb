@@ -51,10 +51,7 @@ module Mongoid
         end
       end
 
-      it 'saves cache fields from configuration' do
-        tmp = Mongoid::AuditLog.cache_fields
-        Mongoid::AuditLog.cache_fields << :name
-
+      it 'saves model attributes' do
         AuditLog.record do
           product = Product.create!(:name => 'Foo bar')
           product.update_attributes(:name => 'Bar baz')
@@ -62,11 +59,9 @@ module Mongoid
 
           product.audit_log_entries.count.should == 3
           product.audit_log_entries.each do |entry|
-            entry.name.should be_present
+            entry.model_attributes['name'].should be_present
           end
         end
-
-        Mongoid::AuditLog.cache_fields = tmp
       end
 
       it 'saves the modifier if passed' do
@@ -108,7 +103,15 @@ module Mongoid
           entry = product.audit_log_entries.first
 
           entry.create?.should be_true
-          entry.tracked_changes.should == { 'name' => [nil, 'Foo bar'] }
+
+          entry.tracked_changes.should == {
+            'name' => [nil, 'Foo bar']
+          }
+
+          entry.model_attributes.should == {
+            '_id' => product.id,
+            'name' => 'Foo bar'
+          }
         end
 
         it 'saves embedded creations' do
@@ -119,6 +122,13 @@ module Mongoid
           entry = product.audit_log_entries.first
 
           entry.create?.should be_true
+
+          entry.model_attributes.should == {
+            '_id' => product.id,
+            'name' => 'Foo bar',
+            'variants' => [{ '_id' => product.variants.first.id, 'sku'=>'sku' }]
+          }
+
           entry.tracked_changes.should == {
             'name' => [nil, 'Foo bar'],
             'variants' => [{ 'sku' => [nil, 'sku'] }]

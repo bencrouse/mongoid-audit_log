@@ -7,7 +7,7 @@ module Mongoid
       field :action, :type => Symbol
       field :tracked_changes, :type => Hash, :default => {}
       field :modifier_id, :type => String
-      field :caches, :type => Hash
+      field :model_attributes, :type => Hash
 
       belongs_to :audited, :polymorphic => true
 
@@ -52,14 +52,14 @@ module Mongoid
 
       def respond_to?(sym, *args)
         key = sym.to_s
-        (caches.present? && caches.has_key?(key)) || super
+        (model_attributes.present? && model_attributes.has_key?(key)) || super
       end
 
       def method_missing(sym, *args, &block)
         key = sym.to_s
 
-        if caches.present? && caches.has_key?(key)
-          caches[key]
+        if model_attributes.present? && model_attributes.has_key?(key)
+          model_attributes[key]
         else
           super
         end
