@@ -71,6 +71,27 @@ module Mongoid
           product.audit_log_entries.first.modifier.should == user
         end
       end
+
+      it 'properly unsets recording on failure' do
+        expect do
+          AuditLog.record do
+            raise
+          end
+        end.to raise_error(Exception)
+
+        AuditLog.recording?.should == false
+      end
+
+      it 'properly unsets modifier on failure' do
+        user = User.create!
+        expect do
+          AuditLog.record(user) do
+            raise
+          end
+        end.to raise_error(Exception)
+
+        AuditLog.current_modifier.should == nil
+      end
     end
 
     describe '.disable' do
