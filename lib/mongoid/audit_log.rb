@@ -27,6 +27,7 @@ module Mongoid
       Thread.current[:mongoid_audit_log_recording] = true
       Thread.current[:mongoid_audit_log_modifier] = modifier
       yield
+    ensure
       Thread.current[:mongoid_audit_log_recording] = nil
       Thread.current[:mongoid_audit_log_modifier] = nil
     end
@@ -35,6 +36,7 @@ module Mongoid
       tmp = Thread.current[:mongoid_audit_log_recording]
       Thread.current[:mongoid_audit_log_recording] = false
       yield
+    ensure
       Thread.current[:mongoid_audit_log_recording] = tmp
     end
 
