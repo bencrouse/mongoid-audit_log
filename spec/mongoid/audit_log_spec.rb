@@ -161,7 +161,7 @@ module Mongoid
         it 'saves details' do
           product = Product.create!(:name => 'Foo bar')
           product.update_attributes(:name => 'Bar baz')
-          entry = product.audit_log_entries.last
+          entry = product.audit_log_entries.desc(:created_at).first
 
           entry.update?.should be_true
           entry.tracked_changes.should == { 'name' => ['Foo bar', 'Bar baz'] }
@@ -176,7 +176,7 @@ module Mongoid
           product.variants.first.sku = 'newsku'
           product.save!
 
-          entry = product.audit_log_entries.last
+          entry = product.audit_log_entries.desc(:created_at).first
 
           entry.update?.should be_true
           entry.tracked_changes.should == {
@@ -196,7 +196,7 @@ module Mongoid
         it 'saves an entry' do
           product = Product.create!(:name => 'Foo bar')
           product.destroy
-          entry = product.audit_log_entries.last
+          entry = product.audit_log_entries.desc(:created_at).first
 
           entry.destroy?.should be_true
         end
