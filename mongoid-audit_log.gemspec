@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["bencrouse@gmail.com"]
   spec.description   = %q{Stupid simple audit logging for Mongoid}
   spec.summary       = %q{No fancy versioning, undo, redo, etc. Just saves changes to Mongoid models in a separate collection.}
-  spec.homepage      = "https://github.com/bencrouse/mongoid-audit-log"
+  spec.homepage      = "https://github.com/bencrouse/mongoid-audit_log"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
