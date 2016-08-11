@@ -12,6 +12,7 @@ module Mongoid
 
       class ::Variant
         include Mongoid::Document
+        include Mongoid::AuditLog
         field :sku, :type => String
         embedded_in :product
       end
@@ -124,6 +125,7 @@ module Mongoid
           entry = product.audit_log_entries.first
 
           entry.create?.should be_true
+          entry.root.should == product
 
           entry.tracked_changes.should == {
             'name' => [nil, 'Foo bar']
@@ -141,6 +143,7 @@ module Mongoid
           product.save!
 
           entry = product.audit_log_entries.first
+          entry.root.should == product
 
           entry.create?.should be_true
 
@@ -155,6 +158,21 @@ module Mongoid
             'variants' => [{ 'sku' => [nil, 'sku'] }]
           }
         end
+
+        it 'tracks parents on embedded creations' do
+          product = Product.create!(:name => 'Foo bar')
+          variant = product.variants.create!(sku: 'sku')
+
+          entry = Mongoid::AuditLog::Entry.desc(:created_at).first
+          entry.root.should == product
+          entry.document_path.length.should == 2
+          entry.document_path.first['class_name'].should == product.class.name
+          entry.document_path.first['id'].should == product.id
+          entry.document_path.first['relation'].should == 'variants'
+          entry.document_path.second['class_name'].should == variant.class.name
+          entry.document_path.second['id'].should == variant.id
+          entry.document_path.second['relation'].should == nil
+        end
       end
 
       context 'update' do
@@ -164,6 +182,7 @@ module Mongoid
           entry = product.audit_log_entries.desc(:created_at).first
 
           entry.update?.should be_true
+          entry.root.should == product
           entry.tracked_changes.should == { 'name' => ['Foo bar', 'Bar baz'] }
         end
 
@@ -179,6 +198,7 @@ module Mongoid
           entry = product.audit_log_entries.desc(:created_at).first
 
           entry.update?.should be_true
+          entry.root.should == product
           entry.tracked_changes.should == {
             'name' => ['Foo bar', 'Bar baz'],
             'variants' => [{ 'sku' => ['sku', 'newsku'] }]
@@ -190,6 +210,23 @@ module Mongoid
           product.update_attributes(:name => 'Foo bar')
           product.audit_log_entries.length.should == 1
         end
+
+        it 'tracks parents on embedded updates' do
+          product = Product.create!(:name => 'Foo bar')
+          variant = product.variants.create!(sku: 'sku')
+          variant.sku = 'newsku'
+          variant.save!
+
+          entry = Mongoid::AuditLog::Entry.desc(:created_at).first
+          entry.root.should == product
+          entry.document_path.length.should == 2
+          entry.document_path.first['class_name'].should == product.class.name
+          entry.document_path.first['id'].should == product.id
+          entry.document_path.first['relation'].should == 'variants'
+          entry.document_path.second['class_name'].should == variant.class.name
+          entry.document_path.second['id'].should == variant.id
+          entry.document_path.second['relation'].should == nil
+        end
       end
 
       context 'destroy' do
@@ -199,6 +236,23 @@ module Mongoid
           entry = product.audit_log_entries.desc(:created_at).first
 
           entry.destroy?.should be_true
+          entry.root.should == nil
+        end
+
+        it 'tracks parents on embedded destroys' do
+          product = Product.create!(:name => 'Foo bar')
+          variant = product.variants.create!(sku: 'sku')
+          variant.destroy!
+
+          entry = Mongoid::AuditLog::Entry.desc(:created_at).first
+          entry.root.should == product
+          entry.document_path.length.should == 2
+          entry.document_path.first['class_name'].should == product.class.name
+          entry.document_path.first['id'].should == product.id
+          entry.document_path.first['relation'].should == 'variants'
+          entry.document_path.second['class_name'].should == variant.class.name
+          entry.document_path.second['id'].should == variant.id
+          entry.document_path.second['relation'].should == nil
         end
       end
     end

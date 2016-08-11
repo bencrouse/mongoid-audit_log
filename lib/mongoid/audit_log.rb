@@ -61,9 +61,17 @@ module Mongoid
           :audited_type => self.class,
           :audited_id => id,
           :tracked_changes => @_audit_log_changes.all,
-          :model_attributes => attributes.dup
+          :model_attributes => attributes.dup,
+          :document_path => traverse_association_chain
         )
       end
+    end
+
+    def traverse_association_chain(node = self, current_relation = nil)
+      relation = node.embedded? ? node.metadata_name.to_s : nil
+      list = node._parent ? traverse_association_chain(node._parent, relation) : []
+      list << { class_name: node.class.name, id: node.id, relation: current_relation }
+      list
     end
   end
 end

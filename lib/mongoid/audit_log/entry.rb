@@ -8,6 +8,7 @@ module Mongoid
       field :tracked_changes, :type => Hash, :default => {}
       field :modifier_id, :type => String
       field :model_attributes, :type => Hash
+      field :document_path, :type => Array
 
       belongs_to :audited, :polymorphic => true
 
@@ -48,6 +49,17 @@ module Mongoid
                            end
 
         @modifier = modifier
+      end
+
+      def root
+        root = document_path.first
+        return audited if root.blank?
+
+        if audited_type.to_s == root['class_name'].to_s && audited_id.to_s == root['id'].to_s
+          audited
+        else
+          root['class_name'].constantize.find(root['id'])
+        end
       end
 
       def respond_to?(sym, *args)
