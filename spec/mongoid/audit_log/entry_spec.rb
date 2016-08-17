@@ -10,12 +10,30 @@ module Mongoid
         class ::Product
           include Mongoid::Document
           include Mongoid::AuditLog
+          field :name, :type => String
+          embeds_many :variants
+        end
+
+        class ::Variant
+          include Mongoid::Document
+          include Mongoid::AuditLog
+          field :sku, :type => String
+          embedded_in :product
+          embeds_many :options
+        end
+
+        class ::Option
+          include Mongoid::Document
+          include Mongoid::AuditLog
+          field :name, :type => String
+          embedded_in :variant
         end
       end
 
       after(:all) do
         AuditLog.modifier_class_name = @remember_modifier_class_name
         Object.send(:remove_const, :Product)
+        Object.send(:remove_const, :Variant)
       end
 
       let(:user) { User.create! }
@@ -54,6 +72,17 @@ module Mongoid
         it 'finds the modifier based on the configured class' do
           entry = Entry.new(:modifier_id => user.id)
           entry.modifier.should == user
+        end
+      end
+
+      describe '#audited' do
+        it 'uses the document path to find embedded documents' do
+          product = Product.create!(:name => 'Foo bar')
+          variant = product.variants.create!
+          option = AuditLog.record { variant.options.create! }
+
+          entry = Entry.desc(:created_at).first
+          entry.audited.should == option
         end
       end
 

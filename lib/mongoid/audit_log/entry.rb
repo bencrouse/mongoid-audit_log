@@ -51,14 +51,26 @@ module Mongoid
         @modifier = modifier
       end
 
+      def for_embedded_doc?
+        document_path.try(:length).to_i > 1
+      end
+
+      def audited
+        if for_embedded_doc?
+          lookup_from_document_path
+        else
+          audited_type.constantize.where(id: audited_id).first
+        end
+      end
+
       def root
         root = document_path.first
         return audited if root.blank?
 
-        if audited_type.to_s == root['class_name'].to_s && audited_id.to_s == root['id'].to_s
-          audited
-        else
+        if for_embedded_doc?
           root['class_name'].constantize.find(root['id'])
+        else
+          audited
         end
       end
 
@@ -75,6 +87,32 @@ module Mongoid
         else
           super
         end
+      end
+
+      private
+
+      def lookup_from_document_path
+        return nil if document_path.blank?
+
+        document_path.reduce(root) do |current, path|
+          relation_match = if document_path_matches?(path, current)
+                             current
+                           elsif current.respond_to?(:detect)
+                             current.detect do |model|
+                               document_path_matches?(path, model)
+                             end
+                           end
+
+          if path['relation'].blank?
+            return relation_match
+          else
+            relation_match.send(path['relation'])
+          end
+        end
+      end
+
+      def document_path_matches?(path, object)
+        object.class.name == path['class_name'] && object.id == path['id']
       end
     end
   end

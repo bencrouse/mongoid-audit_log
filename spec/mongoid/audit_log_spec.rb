@@ -150,7 +150,7 @@ module Mongoid
           entry.model_attributes.should == {
             '_id' => product.id,
             'name' => 'Foo bar',
-            'variants' => [{ '_id' => product.variants.first.id, 'sku'=>'sku' }]
+            'variants' => [{ '_id' => product.variants.first.id, 'sku' => 'sku' }]
           }
 
           entry.tracked_changes.should == {
