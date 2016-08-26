@@ -10,7 +10,11 @@ module Mongoid
       field :model_attributes, :type => Hash
       field :document_path, :type => Array
 
-      belongs_to :audited, :polymorphic => true
+      if Gem::Version.new(Mongoid::VERSION) < Gem::Version.new('6.0.0.beta')
+        belongs_to :audited, :polymorphic => true
+      else
+        belongs_to :audited, :polymorphic => true, :optional => true
+      end
 
       index({ :audited_id => 1, :audited_type => 1 })
       index({ :modifier_id => 1 })
