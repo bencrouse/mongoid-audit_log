@@ -61,7 +61,7 @@ module Mongoid
           :audited_type => self.class,
           :audited_id => id,
           :tracked_changes => @_audit_log_changes.all,
-          :model_attributes => attributes.dup,
+          :model_attributes => attributes.deep_dup,
           :document_path => traverse_association_chain
         )
       end
