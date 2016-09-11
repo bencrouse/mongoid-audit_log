@@ -16,6 +16,8 @@ module Mongoid
         field :sku, :type => String
         embedded_in :product
       end
+
+      AuditLog.disable
     end
 
     after(:all) do
@@ -95,8 +97,31 @@ module Mongoid
       end
     end
 
+    describe '.enable' do
+      after(:each) do
+        AuditLog.disable
+      end
+
+      it 'starts recording' do
+        AuditLog.enable
+
+        product = Product.create!(:name => 'Foo bar')
+        product.audit_log_entries.count.should == 1
+      end
+    end
+
     describe '.disable' do
-      it 'can disable recording' do
+      it 'stops recording' do
+        AuditLog.enable
+        AuditLog.disable
+
+        product = Product.create!(:name => 'Foo bar')
+        product.audit_log_entries.should be_empty
+      end
+
+      it 'can disable recording for a block' do
+        AuditLog.disable
+
         AuditLog.record do
           product = Product.create!(:name => 'Foo bar')
 

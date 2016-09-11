@@ -24,20 +24,30 @@ module Mongoid
     end
 
     def self.record(modifier = nil)
-      Thread.current[:mongoid_audit_log_recording] = true
+      already_recording = recording?
+      enable unless already_recording
       Thread.current[:mongoid_audit_log_modifier] = modifier
       yield
     ensure
-      Thread.current[:mongoid_audit_log_recording] = nil
+      disable unless already_recording
       Thread.current[:mongoid_audit_log_modifier] = nil
     end
 
+    def self.enable
+      Thread.current[:mongoid_audit_log_recording] = true
+    end
+
     def self.disable
-      tmp = Thread.current[:mongoid_audit_log_recording]
+      already_recording = recording?
       Thread.current[:mongoid_audit_log_recording] = false
-      yield
-    ensure
-      Thread.current[:mongoid_audit_log_recording] = tmp
+
+      if block_given?
+        begin
+          yield
+        ensure
+          Thread.current[:mongoid_audit_log_recording] = already_recording
+        end
+      end
     end
 
     def self.recording?
