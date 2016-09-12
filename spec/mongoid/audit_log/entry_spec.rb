@@ -84,6 +84,10 @@ module Mongoid
           entry = Entry.desc(:created_at).first
           entry.audited.should == option
         end
+
+        it 'returns nil if the audited info is blank' do
+          Entry.new.audited.should be_nil
+        end
       end
 
       describe '#modifier_id=' do

@@ -60,6 +60,8 @@ module Mongoid
       end
 
       def audited
+        return nil if audited_type.blank? || audited_id.blank?
+
         if for_embedded_doc?
           lookup_from_document_path
         else
