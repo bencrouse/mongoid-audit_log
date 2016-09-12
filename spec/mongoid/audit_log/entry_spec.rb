@@ -68,6 +68,14 @@ module Mongoid
         end
       end
 
+      describe '#valid?' do
+        it 'does not override a manually set modifier' do
+          entry = Entry.new(:modifier_id => user.id)
+          entry.valid?
+          entry.modifier.should == user
+        end
+      end
+
       describe '#modifier' do
         it 'finds the modifier based on the configured class' do
           entry = Entry.new(:modifier_id => user.id)

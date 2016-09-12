@@ -32,7 +32,9 @@ module Mongoid
 
       def valid?(*)
         result = super
-        self.modifier = Mongoid::AuditLog.current_modifier if result
+        if result && modifier.blank?
+          self.modifier = Mongoid::AuditLog.current_modifier
+        end
         result
       end
 
