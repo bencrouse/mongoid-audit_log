@@ -44,6 +44,11 @@ If you want to log the user who made the change, pass that user to the record me
 Mongoid::AuditLog.record(current_user) do
   Model.create!
 end
+
+# or
+
+Mongoid::AuditLog.current_modifier = current_user
+Mongoid::AuditLog.enable
 ```
 
 A basic implementation in a Rails app might look something like:
