@@ -26,11 +26,11 @@ module Mongoid
     def self.record(modifier = nil)
       already_recording = recording?
       enable unless already_recording
-      Thread.current[:mongoid_audit_log_modifier] = modifier
+      self.current_modifier = modifier
       yield
     ensure
       disable unless already_recording
-      Thread.current[:mongoid_audit_log_modifier] = nil
+      self.current_modifier = nil
     end
 
     def self.enable
@@ -56,6 +56,10 @@ module Mongoid
 
     def self.current_modifier
       Thread.current[:mongoid_audit_log_modifier]
+    end
+    
+    def self.current_modifier=(modifier)
+      Thread.current[:mongoid_audit_log_modifier] = modifier
     end
 
     private
