@@ -76,7 +76,7 @@ module Mongoid
         return audited if root.blank?
 
         if for_embedded_doc?
-          root['class_name'].constantize.find(root['id'])
+          root['class_name'].constantize.where(id: root['id']).first
         else
           audited
         end
@@ -111,7 +111,7 @@ module Mongoid
                              end
                            end
 
-          if path['relation'].blank?
+          if path['relation'].blank? || relation_match.blank?
             return relation_match
           else
             relation_match.send(path['relation'])

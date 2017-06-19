@@ -133,6 +133,17 @@ module Mongoid
           entry.other.should == nil
         end
       end
+
+      describe '#root' do
+        it 'returns nil if cannot be found' do
+          product = Product.create!(:name => 'Foo bar')
+          AuditLog.record { product.variants.create! }
+
+          entry = Entry.desc(:created_at).first
+          product.destroy
+          entry.root.should be_nil
+        end
+      end
     end
   end
 end
