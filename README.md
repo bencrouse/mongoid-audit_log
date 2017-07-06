@@ -128,6 +128,23 @@ model.audit_log_entries.first.create? # => true
 model.audit_log_entries.first.model_attributes # => {"name"=>"foo bar"}
 ```
 
+### Restoring
+
+You can restore models for `Mongoid::AuditLog::Entry` instances for deletions.
+This works for both root and embedded documents.
+
+Examples:
+```ruby
+model = Model.create!(:name => 'foo bar')
+Mongoid::AuditLog.record { model.destroy }
+
+entry = Mongoid::AuditLog::Entry.first
+entry.restore!
+
+model == Model.find_by(name: 'foo bar') # => true
+```
+
+It's possible to end up in a situation where a destroy entry cannot be restored, e.g. an entry deleting an embedded document for a root document that's already been deleted. In these scenarios, `Mongoid::AuditLog::Restore::InvalidRestore` will be raised.
 
 ## Contributing
 

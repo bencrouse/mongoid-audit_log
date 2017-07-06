@@ -9,6 +9,7 @@ module Mongoid
       field :modifier_id, :type => String
       field :model_attributes, :type => Hash
       field :document_path, :type => Array
+      field :restored, :type => Boolean, default: false
 
       if Gem::Version.new(Mongoid::VERSION) < Gem::Version.new('6.0.0.beta')
         belongs_to :audited, :polymorphic => true
@@ -80,6 +81,17 @@ module Mongoid
         else
           audited
         end
+      end
+
+      def restore!
+        raise Restore::InvalidRestore if restored? || !destroy?
+
+        Restore.new(self).perform
+        update_attributes!(:restored => true)
+      end
+
+      def restorable?
+        destroy? && !restored? && Restore.new(self).valid?
       end
 
       def respond_to?(sym, *args)

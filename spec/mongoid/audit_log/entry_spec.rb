@@ -144,6 +144,74 @@ module Mongoid
           entry.root.should be_nil
         end
       end
+
+      describe '#restore!' do
+        it 'marks the entry as restored' do
+          product = Product.create!(:name => 'Foo bar')
+          AuditLog.record { product.destroy }
+
+          entry = Entry.desc(:created_at).first
+          entry.restore!
+          entry.should be_restored
+        end
+
+        it 'raises InvalidRestore if already restored' do
+          product = Product.create!(:name => 'Foo bar')
+          AuditLog.record { product.destroy }
+
+          entry = Entry.desc(:created_at).first
+          entry.restore!
+
+          expect { entry.restore! }.to raise_error(Restore::InvalidRestore)
+        end
+
+        it 'raises InvalidRestore if not a destroy' do
+          product = Product.create!(:name => 'Foo bar')
+          AuditLog.record { product.variants.create! }
+
+          entry = Entry.desc(:created_at).first
+          expect { entry.restore! }.to raise_error(Restore::InvalidRestore)
+        end
+
+        it 'raises InvalidRestore if the root is blank' do
+          product = Product.create!(:name => 'Foo bar')
+          product.variants.create!
+          AuditLog.record { product.variants.first.destroy }
+          product.destroy
+
+          entry = Entry.desc(:created_at).first
+          expect { entry.restore! }.to raise_error(Restore::InvalidRestore)
+        end
+      end
+
+      describe '#restorable?' do
+        it 'is false if already restored' do
+          product = Product.create!(:name => 'Foo bar')
+          AuditLog.record { product.destroy }
+
+          entry = Entry.desc(:created_at).first
+          entry.restore!
+          entry.should_not be_restorable
+        end
+
+        it 'is false if not a destroy' do
+          product = Product.create!(:name => 'Foo bar')
+          AuditLog.record { product.variants.create! }
+
+          entry = Entry.desc(:created_at).first
+          entry.should_not be_restorable
+        end
+
+        it 'is false is root is blank' do
+          product = Product.create!(:name => 'Foo bar')
+          product.variants.create!
+          AuditLog.record { product.variants.first.destroy }
+          product.destroy
+
+          entry = Entry.desc(:created_at).first
+          entry.should_not be_restorable
+        end
+      end
     end
   end
 end

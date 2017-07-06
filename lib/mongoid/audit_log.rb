@@ -3,6 +3,7 @@ require "mongoid/audit_log/config"
 require "mongoid/audit_log/entry"
 require "mongoid/audit_log/changes"
 require "mongoid/audit_log/embedded_changes"
+require "mongoid/audit_log/restore"
 
 module Mongoid
   module AuditLog
@@ -57,7 +58,7 @@ module Mongoid
     def self.current_modifier
       Thread.current[:mongoid_audit_log_modifier]
     end
-    
+
     def self.current_modifier=(modifier)
       Thread.current[:mongoid_audit_log_modifier] = modifier
     end
