@@ -61,7 +61,17 @@ module Mongoid
       private
 
       def embedded_changes
-        @embedded_changes ||= Mongoid::AuditLog::EmbeddedChanges.new(model).all
+        @embedded_changes ||= model.embedded_relations.inject({}) do |memo, t|
+          name = t.first
+          embedded = model.send(name)
+          changes = Mongoid::AuditLog::Changes.extract_from(embedded)
+
+          if embedded.present? && changes.present?
+            memo[name] = changes
+          end
+
+          memo
+        end
       end
     end
   end

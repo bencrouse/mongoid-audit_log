@@ -2,7 +2,6 @@ require "mongoid/audit_log/version"
 require "mongoid/audit_log/config"
 require "mongoid/audit_log/entry"
 require "mongoid/audit_log/changes"
-require "mongoid/audit_log/embedded_changes"
 require "mongoid/audit_log/restore"
 
 module Mongoid
@@ -83,7 +82,7 @@ module Mongoid
     end
 
     def traverse_association_chain(node = self, current_relation = nil)
-      relation = node.embedded? ? node.metadata_name.to_s : nil
+      relation = node.embedded? ? node.association_name.to_s : nil
       list = node._parent ? traverse_association_chain(node._parent, relation) : []
       list << { class_name: node.class.name, id: node.id, relation: current_relation }
       list

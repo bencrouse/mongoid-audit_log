@@ -54,7 +54,7 @@ module Mongoid
         metadata = restored_root.class.reflect_on_association(last_path['relation'])
         relation = restored_root.send(last_path['relation'])
 
-        if metadata.many?
+        if metadata.is_a?(Association::Embedded::EmbedsMany)
           relation.build
         elsif relation.present?
           raise DuplicateError
