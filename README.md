@@ -146,6 +146,29 @@ model == Model.find_by(name: 'foo bar') # => true
 
 It's possible to end up in a situation where a destroy entry cannot be restored, e.g. an entry deleting an embedded document for a root document that's already been deleted. In these scenarios, `Mongoid::AuditLog::Restore::InvalidRestore` will be raised.
 
+### Disabling
+
+The `AuditLog` module provides methods to included classes to allow explicit disabling or enabling of logging. This can be useful if a model includes the mixin indirectly through another mixin or inheritance.
+
+```ruby
+class Parent
+  include Mongoid::Document
+  include Mongoid::AuditLog
+end
+
+class Child < Parent
+  disable_audit_log
+end
+
+class Grandchild < Child
+  enable_audit_log
+end
+
+Parent.audit_log_enabled? # => true
+Child.audit_log_enabled? # => false
+Grandchild.audit_log_enabled? # => true
+```
+
 ## Contributing
 
 1. Fork it

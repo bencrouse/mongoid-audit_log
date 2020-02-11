@@ -25,6 +25,10 @@ module Mongoid
       Object.send(:remove_const, :Variant)
     end
 
+    after(:each) do
+      Product.enable_audit_log
+    end
+
     describe '.record' do
       it 'does not save an entry if not recording' do
         product = Product.create!
@@ -198,6 +202,15 @@ module Mongoid
           entry.document_path.second['id'].should == variant.id
           entry.document_path.second['relation'].should == nil
         end
+
+        it 'does not record if model disables logging' do
+          product = Product.create!(:name => 'Foo bar')
+          product.audit_log_entries.count.should eq(1)
+
+          Product.disable_audit_log
+          product.update!(name: 'Foo bar baz')
+          product.audit_log_entries.count.should eq(1)
+        end
       end
 
       context 'update' do
@@ -278,6 +291,57 @@ module Mongoid
           entry.document_path.second['class_name'].should == variant.class.name
           entry.document_path.second['id'].should == variant.id
           entry.document_path.second['relation'].should == nil
+        end
+      end
+    end
+
+    describe '.disable_audit_log' do
+      it 'disables recording for model' do
+        AuditLog.record do
+          product = Product.create!(name: 'Foo bar')
+          product.audit_log_entries.count.should eq(1)
+
+          Product.disable_audit_log
+          product.record_audit_log?.should be_false
+
+          product.update!(name: 'Bar foo')
+          product.audit_log_entries.count.should eq(1)
+        end
+      end
+    end
+
+    describe '.enable_audit_log' do
+      it 'enables recording for model' do
+        AuditLog.record do
+          Product.disable_audit_log
+
+          product = Product.create!(name: 'Foo bar')
+          product.audit_log_entries.count.should eq(0)
+
+          Product.enable_audit_log
+          product.record_audit_log?.should be_true
+
+          product.update!(name: 'Bar foo')
+          product.audit_log_entries.count.should eq(1)
+        end
+      end
+    end
+
+    describe '#record_audit_log?' do
+      it 'returns true while recording' do
+        Product.new.record_audit_log?.should be_false
+
+        AuditLog.record do
+          Product.new.record_audit_log?.should be_true
+        end
+      end
+
+      it 'returns false when audit log is disabled' do
+        Product.disable_audit_log
+        Product.new.record_audit_log?.should be_false
+
+        AuditLog.record do
+          Product.new.record_audit_log?.should be_false
         end
       end
     end

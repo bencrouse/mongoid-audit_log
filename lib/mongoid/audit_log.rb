@@ -14,12 +14,26 @@ module Mongoid
 
       AuditLog.actions.each do |action|
         send("before_#{action}") do
-          set_audit_log_changes if AuditLog.recording?
+          set_audit_log_changes if record_audit_log?
         end
 
         send("after_#{action}") do
-          save_audit_log_entry(action) if AuditLog.recording?
+          save_audit_log_entry(action) if record_audit_log?
         end
+      end
+    end
+
+    class_methods do
+      def enable_audit_log
+        @audit_log_enabled = true
+      end
+
+      def disable_audit_log
+        @audit_log_enabled = false
+      end
+
+      def audit_log_enabled?
+        !defined?(@audit_log_enabled) || @audit_log_enabled
       end
     end
 
@@ -60,6 +74,10 @@ module Mongoid
 
     def self.current_modifier=(modifier)
       Thread.current[:mongoid_audit_log_modifier] = modifier
+    end
+
+    def record_audit_log?
+      AuditLog.recording? && self.class.audit_log_enabled?
     end
 
     private
