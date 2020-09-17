@@ -44,7 +44,7 @@ module Mongoid
                         nil
                       else
                         klass = Mongoid::AuditLog.modifier_class_name.constantize
-                        klass.find(modifier_id)
+                        klass.find(modifier_id) rescue nil
                       end
       end
 
