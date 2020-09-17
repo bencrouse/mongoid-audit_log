@@ -81,6 +81,11 @@ module Mongoid
           entry = Entry.new(:modifier_id => user.id)
           entry.modifier.should == user
         end
+
+        it 'can handle a missing modifier' do
+          entry = Entry.new(:modifier_id => 'foo')
+          entry.modifier.should be_nil
+        end
       end
 
       describe '#audited' do
