@@ -4,7 +4,7 @@ module Mongoid
       include Mongoid::Document
       include Mongoid::Timestamps::Created
 
-      field :action, :type => Symbol
+      field :action, :type => String
       field :tracked_changes, :type => Hash, :default => {}
       field :modifier_id, :type => String
       field :model_attributes, :type => Hash
